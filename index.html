@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Earthquake List</title>
+    <title>Volcanoes in the United States</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
@@ -16,17 +16,21 @@
         #container {
             display: flex;
             height: 100vh;
-            flex-direction: row;
+            flex-direction: row-reverse;
             align-items: stretch;
         }
 
         #side-panel {
-            flex-basis: 500px;
+            flex-basis: 450px;
             overflow-y: scroll;
         }
 
         #map {
             flex-grow: 1;
+        }
+
+        #title {
+            padding-left: 20px;
         }
 
         button {
@@ -49,6 +53,12 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        @media screen and (max-width: 1024px) {
+            #side-panel {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -56,14 +66,17 @@
     <main id="container">
         <div id="side-panel">
 
-            <h2>Earthquake List</h2>
-            <button>Sort by Magnitude</button>
+            <div id="title">
+                <h2>Volcanoes in the United States</h2>
+                <button id="sortElev">Sort by Elevation</button>
+                <button>Sort by Name</button>
+            </div>
 
             <table>
                 <tr>
-                    <th>id</th>
-                    <th>magnitude</th>
-                    <th>timestamp</th>
+                    <th>name</th>
+                    <th>elevation</th>
+                    <th>type</th>
                 </tr>
             </table>
 
@@ -74,14 +87,14 @@
     <script>
         // define the mapbox access token
         mapboxgl.accessToken =
-            'pk.eyJ1IjoiamFrb2J6aGFvIiwiYSI6ImNpcms2YWsyMzAwMmtmbG5icTFxZ3ZkdncifQ.P9MBej1xacybKcDN_jehvw';
+            'pk.eyJ1IjoiYWl3aGVuIiwiYSI6ImNsYTM0MzRtZjBpYzMzdm1ueWk3a2x2anEifQ.IdE46ncjNqO9e9dsxZSFIw';
 
         // define the map object
         let map = new mapboxgl.Map({
             container: 'map', // container ID
-            style: 'mapbox://styles/mapbox/satellite-v9', // style URL
-            zoom: 5.5, // starting zoom
-            center: [138, 38] // starting center
+            style: 'mapbox://styles/mapbox/outdoors-v11', // style URL
+            zoom: 2.5, // starting zoom
+            center: [-130.847, 49.729] // starting center
         });
 
 
@@ -89,25 +102,24 @@
         async function geojsonFetch() {
 
             let response, earthquakes, japan, table;
-            response = await fetch('assets/earthquakes.geojson');
-            earthquakes = await response.json();
-            console.log(earthquakes);
-            response = await fetch('assets/japan.json');
-            japan = await response.json();
-            console.log(japan);
+            response = await fetch('assets/volcanoes.geojson');
+            volcanoes = await response.json();
+            console.log(volcanoes);
+            response = await fetch('assets/states.geojson');
+            states = await response.json();
+            console.log(states);
 
             table = document.getElementsByTagName("table")[0];
             let row, cell1, cell2, cell3;
-            for (let i = 0; i < earthquakes.features.length; i++) {
+            for (let i = 0; i < volcanoes.features.length; i++) {
                 // Create an empty <tr> element and add it to the 1st position of the table:
                 row = table.insertRow(-1);
                 cell1 = row.insertCell(0);
                 cell2 = row.insertCell(1);
                 cell3 = row.insertCell(2);
-                cell1.innerHTML = earthquakes.features[i].properties.id;
-                cell2.innerHTML = earthquakes.features[i].properties.mag;
-                cell3.innerHTML = new Date(earthquakes.features[i].properties.time).toLocaleDateString(
-                    "en-US");
+                cell1.innerHTML = volcanoes.features[i].properties.name;
+                cell2.innerHTML = volcanoes.features[i].properties.elevation;
+                cell3.innerHTML = volcanoes.features[i].properties.type;
             }
 
 
@@ -115,36 +127,36 @@
             map.on('load', function loadingData() {
 
 
-                map.addSource('japan', {
+                map.addSource('states', {
                     type: 'geojson',
-                    data: japan
+                    data: states
                 });
 
                 map.addLayer({
-                    'id': 'japan-layer',
+                    'id': 'states-layer',
                     'type': 'fill',
-                    'source': 'japan',
+                    'source': 'states',
                     'paint': {
-                        'fill-color': '#0080ff', // blue color fill
+                        'fill-color': '#8FBC8F',
                         'fill-opacity': 0.5
                     }
                 });
                 
-                map.addSource('earthquakes', {
+                map.addSource('volcanoes', {
                     type: 'geojson',
-                    data: earthquakes
+                    data: volcanoes
                 });
 
                 map.addLayer({
-                    'id': 'earthquakes-layer',
+                    'id': 'volcanoes-layer',
                     'type': 'circle',
-                    'source': 'earthquakes',
+                    'source': 'volcanoes',
                     'paint': {
                         'circle-radius': 8,
-                        'circle-stroke-width': 2,
-                        'circle-color': 'red',
-                        'circle-stroke-color': 'white',
-                        'fill-opacity': 0.5
+                        'circle-stroke-width': 3,
+                        'circle-color': '#B22222',
+                        'circle-stroke-color': '#FF7F50',
+                        'circle-opacity': 0.8
                     }
                 });
             });
@@ -153,10 +165,10 @@
 
         geojsonFetch();
 
-        let btn = document.getElementsByTagName("button")[0];
-
-        btn.addEventListener('click', sortTable);
-
+        let btn1 = document.getElementsByTagName("button")[0];
+        let btn2 = document.getElementsByTagName("button")[1];
+        btn1.addEventListener('click', sortTable);
+        btn2.addEventListener('click', sortName);
         // define the function to sort table
         function sortTable(e) {
             let table, rows, switching, i, x, y, shouldSwitch;
@@ -179,6 +191,41 @@
                     y = parseFloat(rows[i + 1].getElementsByTagName("td")[1].innerHTML);
                     //check if the two rows should switch place:
                     if (x < y) {
+                        //if so, mark as a switch and break the loop:
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+                if (shouldSwitch) {
+                    /*If a switch has been marked, make the switch
+                    and mark that a switch has been done:*/
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                }
+            }
+        }
+
+        function sortName(e) {
+            let table, rows, switching, i, x, y, shouldSwitch;
+            table = document.getElementsByTagName("table")[0];
+            switching = true;
+            /*Make a loop that will continue until
+            no switching has been done:*/
+            while (switching) {
+                //start by saying: no switching is done:
+                switching = false;
+                rows = table.rows;
+                /*Loop through all table rows (except the
+                first, which contains table headers):*/
+                for (i = 1; i < (rows.length - 1); i++) {
+                    //start by saying there should be no switching:
+                    shouldSwitch = false;
+                    /*Get the two elements you want to compare,
+                    one from current row and one from the next:*/
+                    x = rows[i].getElementsByTagName("td")[0].innerHTML;
+                    y = rows[i + 1].getElementsByTagName("td")[0].innerHTML;
+                    //check if the two rows should switch place:
+                    if (x > y) {
                         //if so, mark as a switch and break the loop:
                         shouldSwitch = true;
                         break;
